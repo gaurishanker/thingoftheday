@@ -4,6 +4,7 @@ const vwoSDK = require('vwo-node-sdk');
 const fetch = require('node-fetch');
 const { SPACE_ID, ACCESS_TOKEN } = require('./setup/credentials');
 const express = require('express')
+const {v4 : uuidv4} = require('uuid')
 const app = express()
 app.set('view engine', 'ejs');
 app.use(express.static(__dirname + '/public'));
@@ -102,6 +103,8 @@ const itemClassNames = {
   text: "item__text",
 };
 
+const newId = uuidv4();
+
 const renderItems = async (items) => {
   const settingsFile = await vwoSDK.getSettingsFile(366636, '465982d1e86980f3f692d0c2cff3502f')
   const vwoClientInstance = vwoSDK.launch({
@@ -109,8 +112,8 @@ const renderItems = async (items) => {
   });
   items.forEach((item) => {
     
-    var variationName = vwoClientInstance.activate("Contentful test", "first user")
-
+    var variationName = vwoClientInstance.activate("Contentful test", newId)
+    console.log(settingsFile)
     if (variationName == "Control") {
       console.log("inside control");
     } else if(variationName == "Variation-1") {
