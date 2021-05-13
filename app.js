@@ -174,6 +174,6 @@ app.get('/', async (req, res) => {
   res.render('pages/index', {items: items})
 })
 
-app.listen(port, () => {
+app.listen(process.env.PORT || port, () => {
   console.log("started app");
 })
