@@ -1,4 +1,15 @@
-import { SPACE_ID, ACCESS_TOKEN } from "./setup/credentials.js";
+// import { SPACE_ID, ACCESS_TOKEN } from "./setup/credentials.js";
+var http = require('http')
+const vwoSDK = require('vwo-node-sdk');
+const fetch = require('node-fetch');
+const { SPACE_ID, ACCESS_TOKEN } = require('./setup/credentials');
+const express = require('express')
+const app = express()
+app.set('view engine', 'ejs');
+app.use(express.static(__dirname + '/public'));
+const port = 8080
+
+
 
 const endpoint = "https://graphql.contentful.com/content/v1/spaces/" + SPACE_ID;
 
@@ -23,6 +34,7 @@ const query = `{
     }
   }
 }`;
+// https://www.contentful.com/developers/docs/references/content-delivery-api/#/reference/content-types/content-model/get-the-content-model-of-a-space/console
 
 const fetchOptions = {
   method: "POST",
@@ -77,7 +89,8 @@ const formatPublishedDateForDisplay = (dateString) => {
   return `${date.getDate()} ${getMonthStringFromInt(date.getMonth())} ${date.getFullYear()}`;
 };
 
-const microblogHolder = document.querySelector("[data-items]");
+const microblogHolder = [];
+// document.querySelector("[data-items]");
 
 const itemClassNames = {
   container: "item__container",
@@ -89,64 +102,78 @@ const itemClassNames = {
   text: "item__text",
 };
 
-const renderItems = (items) => {
-  items.forEach((item) => {
-    const newItemEl = document.createElement("article");
-    newItemEl.setAttribute("id", item.sys.id);
-    newItemEl.className = itemClassNames.container;
-
-    const newTopRow = document.createElement("div");
-    newTopRow.className = itemClassNames.topRow;
-
-    const newPantherEl = document.createElement("img");
-    newPantherEl.src = `./panthers/${item.panther}.svg`;
-    newPantherEl.alt = `${item.panther} panther emote`;
-    newPantherEl.setAttribute("width", "50");
-    newPantherEl.setAttribute("height", "50");
-    newPantherEl.className = itemClassNames.panther;
-    newTopRow.appendChild(newPantherEl);
-
-    const newDateEl = document.createElement("time");
-    newDateEl.setAttribute("datetime", formatPublishedDateForDateTime(item.sys.firstPublishedAt));
-    newDateEl.innerText = formatPublishedDateForDisplay(item.sys.firstPublishedAt);
-    newDateEl.className = itemClassNames.date;
-    newTopRow.appendChild(newDateEl);
-
-    newItemEl.appendChild(newTopRow);
-
-    if (item.image) {
-      const newImgEl = document.createElement("img");
-      newImgEl.src = `${item.image.url}?w=500`;
-      newImgEl.alt = item.image.description;
-      newImgEl.setAttribute("width", item.image.width);
-      newImgEl.setAttribute("height", item.image.height);
-      newImgEl.className = itemClassNames.img;
-      newItemEl.appendChild(newImgEl);
-    }
-
-    if (item.text) {
-      const newTextEl = document.createElement("h2");
-      newTextEl.innerText = item.text;
-      newTextEl.className = itemClassNames.text;
-      newItemEl.appendChild(newTextEl);
-    }
-
-    if (item.link) {
-      const newLinkEl = document.createElement("a");
-      newLinkEl.href = item.link;
-      newLinkEl.innerText = item.linkText || "View more";
-      newLinkEl.setAttribute("target", "_blank");
-      newLinkEl.setAttribute("rel", "noopener noreferrer");
-      newLinkEl.className = itemClassNames.link;
-      newItemEl.appendChild(newLinkEl);
-    }
-
-    microblogHolder.appendChild(newItemEl);
+const renderItems = async (items) => {
+  const settingsFile = await vwoSDK.getSettingsFile(366636, '465982d1e86980f3f692d0c2cff3502f')
+  const vwoClientInstance = vwoSDK.launch({
+    settingsFile
   });
+  items.forEach((item) => {
+    
+    var variationName = vwoClientInstance.activate("Contentful test", "first user")
+
+    if (variationName == "Control") {
+      console.log("inside control");
+    } else if(variationName == "Variation-1") {
+      console.log("inside variation");
+    } else {
+      console.log("inside no variation");
+    }
+
+    
+    
+
+    // if (item.image) {
+    //   const newImgEl = document.createElement("img");
+    //   newImgEl.src = `${item.image.url}?w=500`;
+    //   newImgEl.alt = item.image.description;
+    //   newImgEl.setAttribute("width", item.image.width);
+    //   newImgEl.setAttribute("height", item.image.height);
+    //   newImgEl.className = itemClassNames.img;
+    //   newItemEl.appendChild(newImgEl);
+    // }
+
+    // if (item.text) {
+    //   const newTextEl = document.createElement("h2");
+    //   newTextEl.innerText = item.text;
+    //   newTextEl.className = itemClassNames.text;
+    //   newItemEl.appendChild(newTextEl);
+    // }
+
+    // if (item.link) {
+    //   const newLinkEl = document.createElement("a");
+    //   newLinkEl.href = item.link;
+    //   newLinkEl.innerText = item.linkText || "View more";
+    //   newLinkEl.setAttribute("target", "_blank");
+    //   newLinkEl.setAttribute("rel", "noopener noreferrer");
+    //   newLinkEl.className = itemClassNames.link;
+    //   newItemEl.appendChild(newLinkEl);
+    // }
+
+    // microblogHolder.appendChild(newItemEl);
+  });
+  return items;
 };
 
-renderFooterDate();
 
-fetch(endpoint, fetchOptions)
-  .then((response) => response.json())
-  .then((data) => renderItems(data.data.microblogCollection.items));
+
+async function renderIt() {
+  // renderFooterDate();
+  const response = await fetch(endpoint, fetchOptions);
+  const data = await response.json()
+  const items = data.data.microblogCollection.items;
+  return renderItems(items);
+}
+
+
+
+
+app.get('/', async (req, res) => {
+  const items = await renderIt();
+  
+  console.log(items);
+  res.render('pages/index', {items: items})
+})
+
+app.listen(port, () => {
+  console.log("started app");
+})

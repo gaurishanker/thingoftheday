@@ -1,0 +1,6 @@
+const renderFooterDate = () => {
+    const footerYearHolder = document.querySelector("[data-footer-year]");
+    const timestamp = Date.now();
+    const date = new Date(timestamp);
+    footerYearHolder.innerText = date.getFullYear();
+};
