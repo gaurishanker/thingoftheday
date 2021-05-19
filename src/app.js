@@ -1,7 +1,7 @@
 import { SPACE_ID, ACCESS_TOKEN } from "./setup/credentials.js";
 
 const endpoint = "https://graphql.contentful.com/content/v1/spaces/" + SPACE_ID;
-
+console.log(endpoint)
 const query = `{
   microblogCollection {
     items {
