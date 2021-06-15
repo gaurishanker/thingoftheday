@@ -61,8 +61,7 @@
       <header>
         <h1 class="microblog__title">thingoftheday.xyz</h1>
         <p class="microblog__description">
-          thingoftheday is a lightweight microblogging site powered by Contentful and vanilla HTML,
-          CSS and JavaScript.
+          thingoftheday is a lightweight microblogging site powered by Contentful.
         </p>
         <a
           href="https://github.com/whitep4nth3r/thingoftheday"
@@ -74,7 +73,7 @@
       </header>
       
       <% items.forEach((item) => { %>
-        <article id="<%= item.sys.id %>" class="item__container">
+        <article id="<%= item.id %>" class="item__container">
         <div class="item__topRow">
           <img src="/panthers/<%= item.panther %>.svg" alt="<%= item.panther %> panther emote" width="50" height="50" class="item__panther">
     
@@ -86,6 +85,12 @@
           <%= item.text %>
         </h2>
         <% } %>
+
+        <% if(item.link) {%>
+          <a href="<%= item.link %>" target="_blank" rel="noopener noreferrer" class="item__link"> <%= item.linkText %></a>
+        <% } %>
+
+          
         
       </article>
     <% }); %>

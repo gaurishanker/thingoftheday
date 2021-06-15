@@ -9,6 +9,62 @@ const app = express()
 app.set('view engine', 'ejs');
 app.use(express.static(__dirname + '/public'));
 const port = 8080
+const contentful = require("contentful");
+const client = contentful.createClient({
+  // This is the space ID. A space is like a project folder in Contentful terms
+  space: SPACE_ID,
+  // This is the access token for this space. Normally you get both ID and the token in the Contentful web app
+  accessToken: ACCESS_TOKEN
+});
+
+
+// This API call will request an entry with the specified ID from the space defined at the top, using a space-specific access token.
+async function getContent() {
+  let entries = await client.getEntries({
+    'content_type': 'sampleBlogAbTest'
+  });
+  blogPosts = []
+  const settingsFile = await vwoSDK.getSettingsFile(process.env.ACCOUNT_ID, process.env.TOKEN)
+  const vwoClientInstance = vwoSDK.launch({
+      settingsFile
+  });
+  for (const i of Object.keys(entries.items)) {
+    const entry = entries.items[i];
+  // entries.items.forEach(function (entry) {
+    blogPost = {
+      'id': entry.sys.id
+    }
+    for (const key of Object.keys(entry.fields)) {
+      if(key == 'linkTextVariation') {
+        const newId = uuidv4();
+        const variationEntry = entry.fields[key].fields;
+        let exp = 'Contentful integration';
+        // exp = variationEntry.experimentKey;
+        const variationName = vwoClientInstance.activate(exp, newId); // variation => 'variation_1'
+        console.log(variationName)
+        const variationToBeServed = variationEntry.meta[variationName]; // entryId => '6hDfbnInEpiab896VpBueJ'
+        let variation = await client.getEntry(variationToBeServed);
+        blogPost['linkText'] = variation.fields.text;
+        // console.log(variationEntry);
+      }
+      else {
+        blogPost[key] = entry.fields[key];
+      }
+      // console.log(entry);
+    }
+    blogPosts.push(blogPost);
+  // });
+  }
+  // console.log(blogPosts);
+  return blogPosts;
+}
+
+// .then(function (entries) {
+//     entries.items.forEach(function (entry) {
+//     console.log(JSON.stringify(entry.fields))
+//   })
+// })
+// .catch(err => console.log(err));
 
 
 
@@ -103,24 +159,24 @@ const itemClassNames = {
   text: "item__text",
 };
 
-const newId = uuidv4();
+
 
 const renderItems = async (items) => {
-  const settingsFile = await vwoSDK.getSettingsFile(366636, '465982d1e86980f3f692d0c2cff3502f')
-  const vwoClientInstance = vwoSDK.launch({
-    settingsFile
-  });
+  // const settingsFile = await vwoSDK.getSettingsFile(366636, '465982d1e86980f3f692d0c2cff3502f')
+  // const vwoClientInstance = vwoSDK.launch({
+  //   settingsFile
+  // });
   items.forEach((item) => {
     
-    var variationName = vwoClientInstance.activate("Contentful test", newId)
-    console.log(settingsFile)
-    if (variationName == "Control") {
-      console.log("inside control");
-    } else if(variationName == "Variation-1") {
-      console.log("inside variation");
-    } else {
-      console.log("inside no variation");
-    }
+    // var variationName = vwoClientInstance.activate("Contentful test", newId)
+    // console.log(settingsFile)
+    // if (variationName == "Control") {
+    //   console.log("inside control");
+    // } else if(variationName == "Variation-1") {
+    //   console.log("inside variation");
+    // } else {
+    //   console.log("inside no variation");
+    // }
 
     
     
@@ -167,16 +223,21 @@ async function renderIt() {
   return renderItems(items);
 }
 
+async function vwoExample() {
+  const items = await getContent();
+  return items;
+}
+
 
 
 
 app.get('/', async (req, res) => {
-  const items = await renderIt();
-  
+  // const items = await renderIt();
+  const items = await vwoExample();
   console.log(items);
   res.render('pages/index', {items: items})
 })
 
 app.listen(process.env.PORT || port, () => {
-  console.log("started app");
+  console.log("started app on ", process.env.PORT, port);
 })

@@ -1,4 +1,4 @@
 module.exports = {
-    SPACE_ID: "xji18eqnmcf0",
-    ACCESS_TOKEN: "ZajNsGeFri3vTfvSHiplZLqMj6jWWcGgu_AfjDQhH8E"
+    SPACE_ID: process.env.SPACE_ID,
+    ACCESS_TOKEN: process.env.ACCESS_TOKEN
 }
